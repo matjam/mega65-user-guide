@@ -112,6 +112,53 @@ LISTING_FILES=	mega65-assembly-reference.listing \
 all:	$(BOOKS)
 
 books:	$(BOOKS)
+# -------------------------
+# HTML build (Pandoc)
+# -------------------------
+
+HTML_OUTDIR=	html
+WEBFONTS_DIR=	fonts-web
+REPAIRED_FONTS_DIR=	fonts-repaired
+
+# Build split HTML for any top-level .tex book: `make mega65-book-html`
+%-html: *.tex $(EXAMPLES) $(HYPPO_EXAMPLES) lstlang0.sty Makefile references.bib document-memory $(GENERATED_TEX_FILES) $(REPOPATH)/mega65-core/src/vhdl/*.vhdl $(REPOPATH)/mega65-core/src/vhdl/*/*.vhdl web-config/mega65.css $(WEBFONTS_DIR)
+	./getgitinfo
+	./document-memory -q $(REPOPATH)/mega65-core/src/vhdl/*.vhdl $(REPOPATH)/mega65-core/src/vhdl/*/*.vhdl
+	@outdir=$(HTML_OUTDIR)/$*; \
+		rm -rf "$$outdir"; \
+		latexpand --empty-comments --makeatletter $*.tex > "$*._flat_full.tex"; \
+		python3 tools/tex_preprocess_for_pandoc.py "$*._flat_full.tex" "$*._flat_body.tex"; \
+		pandoc -f latex+raw_tex -t chunkedhtml \
+		  --top-level-division=chapter \
+		  --split-level=2 --toc --standalone --citeproc --mathjax \
+		  --number-sections \
+		  --mathjax=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js \
+		  --bibliography=references.bib \
+		  --resource-path=. \
+		  --default-image-extension=svg \
+		  --css mega65.css \
+		  --lua-filter=tools/pandoc_filters/fixchap.lua \
+		  --lua-filter=tools/pandoc_filters/screen.lua \
+		  --lua-filter=tools/pandoc_filters/keys.lua \
+		  --lua-filter=tools/pandoc_filters/size.lua \
+		  --lua-filter=tools/pandoc_filters/labels.lua \
+		  -o "$$outdir" \
+		  "$*._flat_body.tex"; \
+		python3 tools/postprocess_html_refs.py "$$outdir"; \
+		rm -f "$*._flat_full.tex" "$*._flat_body.tex"; \
+		# Copy assets into chunked output (ensure outdir is in this subshell)
+		@outdir=$(HTML_OUTDIR)/$*; \
+		mkdir -p "$$outdir" && \
+		cp web-config/mega65.css "$$outdir"/mega65.css && \
+		cp -r fonts "$$outdir"/fonts && \
+		if [ -d $(WEBFONTS_DIR) ]; then cp -r $(WEBFONTS_DIR) "$$outdir"/fonts-web; fi && \
+		if [ -d images ]; then mkdir -p "$$outdir"/images && cp -a images/. "$$outdir"/images/; fi && \
+		if [ -d frontcover ]; then cp -r frontcover "$$outdir"/frontcover; fi
+
+# Build WOFF2 fonts
+$(WEBFONTS_DIR): tools/make_webfonts.py fonts/*
+	python3 tools/repair_fonts.py; python3 tools/make_webfonts.py; python3 tools/ff_make_webfonts.py
+
 
 screen-maps:	screen-maps.c Makefile
 	$(CC) -Wall -o screen-maps screen-maps.c -lhpdf
@@ -282,3 +329,28 @@ realclean: clean
 
 format:
 	find . -iname '*.h' -o -iname '*.c' -o -iname '*.cpp' | xargs clang-format --style=file -i
+
+# -------------------------
+# Docker convenience targets
+# -------------------------
+DOCKER_IMAGE?= mega65-docs
+DOCKER_UID?= $(shell id -u)
+DOCKER_GID?= $(shell id -g)
+
+.PHONY: docker docker-image docker-%
+
+# Build the Docker image with all toolchain dependencies
+docker-image:
+	docker build -t $(DOCKER_IMAGE) .
+
+# Build all PDFs inside Docker
+docker: docker-image
+	docker run --rm -u $(DOCKER_UID):$(DOCKER_GID) -v $(CURDIR):/work -w /work $(DOCKER_IMAGE) bash -lc 'git config --global --add safe.directory /work; make'
+
+# Build a specific PDF inside Docker, e.g. `make docker-mega65-book.pdf`
+docker-%: docker-image
+	docker run --rm -u $(DOCKER_UID):$(DOCKER_GID) -v $(CURDIR):/work -w /work $(DOCKER_IMAGE) bash -lc 'git config --global --add safe.directory /work; make $*'
+
+# Build split HTML for a given book inside Docker, e.g. `make docker-mega65-book-html`
+docker-%-html: docker-image
+	docker run --rm -u $(DOCKER_UID):$(DOCKER_GID) -v $(CURDIR):/work -w /work $(DOCKER_IMAGE) bash -lc 'git config --global --add safe.directory /work; make $*-html'

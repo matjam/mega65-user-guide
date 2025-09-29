@@ -292,3 +292,8 @@ prg2tex
 
 # Python
 __pycache__
+
+# HTML outputs
+html/
+fonts-repaired/
+fonts-web/

@@ -1,0 +1,334 @@
+/* Base CSS for MEGA65 HTML builds */
+
+@font-face {
+  font-family: 'MegaGlacial';
+  src: url('fonts/MegaGlacial-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'MegaGlacial';
+  src: url('fonts/MegaGlacial-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'MegaGlacial';
+  src: url('fonts/MegaGlacial-Italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Mega';
+  src: url('fonts-web/Mega-Regular.woff2') format('woff2'),
+       url('fonts/mega80-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Mega';
+  src: url('fonts/mega80-Reverse.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MegaAlt';
+  src: url('fonts-web/MegaAlt-Regular.woff2') format('woff2'),
+       url('fonts/mega40-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MEGA65GraphicSymbols';
+  src: url('fonts-web/MEGA65GraphicSymbols.woff2') format('woff2'),
+       url('fonts/MEGA65GraphicSymbols.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'XITS';
+  src: url('fonts/xits-regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'XITS';
+  src: url('fonts/xits-bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'XITS';
+  src: url('fonts/xits-italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inconsolata';
+  src: url('fonts/Inconsolata-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Inconsolata';
+  src: url('fonts/Inconsolata-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'MegaGlacial', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5;
+}
+
+/* Constrain content width for readability */
+body {
+  --page-max: 82ch;
+  --gutter: clamp(12px, 2.2vw, 24px);
+  --border-color: #e5e7eb;
+  --border-color-dark: #111827;
+  max-width: var(--page-max);
+  padding: 1.25rem var(--gutter);
+  margin: 0 auto;
+  background: #fff;
+  color: #111;
+  box-shadow: inset 1px 0 0 var(--border-color), inset -1px 0 0 var(--border-color);
+}
+
+code, pre, kbd, samp {
+  font-family: 'Mega', 'Inconsolata', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.95em;
+}
+
+/* Inline spans to force screen font */
+.mega80, .screentext {
+  /* Mega = mega80 Regular (primary), fallback to monospace */
+  font-family: 'Mega', 'Inconsolata', monospace !important;
+}
+.screentextwide {
+  /* MegaAlt = mega40 Regular */
+  font-family: 'MegaAlt', 'Inconsolata', monospace !important;
+}
+
+.graphicsymbol, .megasymbolkey {
+  font-family: 'MEGA65GraphicSymbols', 'MegaGlacial', sans-serif !important;
+}
+
+.mega-symbols {
+  font-family: 'MEGA65GraphicSymbols', 'MegaGlacial', sans-serif;
+}
+
+/* Generic symbolfont span */
+.symbolfont {
+  font-family: 'MEGA65GraphicSymbols', 'MegaGlacial', sans-serif !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'MegaGlacial', 'XITS', serif;
+  line-height: 1.2;
+  margin: 1.2em 0 .5em;
+}
+
+nav.toc {
+  border: 1px solid #ddd;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+a {
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* Ensure images and tables scale nicely */
+img, table {
+  max-width: 100%;
+}
+
+img {
+  display: block;
+  margin: 1rem auto;
+}
+
+.screenshotwrap img {
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+/* Screen-like blocks (black background, white text) */
+.screen {
+  background: #000;
+  color: #fff;
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  margin: 1rem auto;
+  overflow-x: auto;
+}
+.screen pre { margin: 0; }
+.screen code, .screen pre, .screen pre code {
+  font-family: 'Mega', 'MegaAlt', 'Inconsolata', monospace;
+  font-size: 1.2rem;
+  line-height: 1.25;
+  font-variant-ligatures: none;
+  font-synthesis: none;
+  color: #fff;
+}
+
+/* Center tables horizontally */
+table {
+  margin: 0.5rem auto;
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 100%;
+  table-layout: auto;
+}
+table th, table td {
+  border: 1px solid #d1d5db;
+  padding: 0.1em;
+  min-width: 1.1em;
+}
+table th { white-space: nowrap; }
+
+figure {
+  margin: 1rem auto;
+  text-align: center;
+}
+
+figure img {
+  display: inline-block;
+  margin: 0.5rem auto;
+}
+
+/* Paragraph rhythm */
+p { margin: .6em 0; }
+ul, ol { margin: .6em 0 .6em 1.2em; }
+
+/* Links */
+a { color: #1d4ed8; }
+a:hover { color: #1e40af; }
+
+/* -------------------------
+   MEGA65 key styling (HTML analogue of elements/keys.tex)
+   ------------------------- */
+.key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.35em;
+  height: 1.4em;
+  min-width: 2.6em;
+  border-radius: 0.3em;
+  border: 1px solid rgba(0,0,0,.7);
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,.15), inset 0 1px 0 rgba(0,0,0,.15);
+  line-height: 1;
+  font-weight: 700;
+  text-transform: uppercase;
+  vertical-align: middle;
+  margin: 0 .15em;
+  letter-spacing: .02em;
+  user-select: none;
+}
+
+/* Black key with white text */
+.specialkey, .megakey, .widekey {
+  background: #000;
+  color: #fff;
+}
+
+/* Two-line specialkey content */
+.specialkey {
+  position: relative;
+  padding: 0.15em 0.35em;
+  /* Override .key centering: stack lines and align to top-left */
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  height: 1.4em; /* fixed height for one/two lines */
+  vertical-align: middle; /* center on baseline like MEGA key */
+}
+.specialkey .k-top, .specialkey .k-bot {
+  /* As flex items, size/flow is controlled by the parent; ensure line breaking */
+  width: 100%;
+  text-align: left;
+  line-height: 1.0;
+  font-size: 0.65em;
+  font-weight: 700;
+}
+.specialkey .k-bot { margin-top: 0.10em; }
+
+/* White key with black text */
+.megakeywhite {
+  background: #fff;
+  color: #000;
+}
+
+/* Width variants to roughly match LaTeX sizes */
+.specialkey { min-width: 3.0em; font-size: .85em; }
+.megakey { min-width: 3.0em; font-size: .85em; }
+.megakeywhite { min-width: 3.0em; font-size: .85em; }
+.widekey { min-width: 3.4em; font-size: .85em; }
+
+/* Symbol key: fixed-size black key using symbol font */
+.megasymbolkey {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2em;
+  height: 1.4em;
+  border-radius: 0.3em;
+  border: 1px solid rgba(0,0,0,.7);
+  background: #000;
+  color: #fff;
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,.15), inset 0 1px 0 rgba(0,0,0,.15);
+  font-weight: 700;
+  vertical-align: middle;
+  margin: 0 .15em;
+  user-select: none;
+  font-family: 'MEGA65GraphicSymbols', 'MegaGlacial', sans-serif !important;
+}
+
+/* Inline text set in the MEGA screen fonts */
+.screentext { font-family: 'Mega', 'MegaAlt', 'Inconsolata', monospace !important; font-variant-ligatures: none; font-synthesis: none; }
+.megakey, .megakeywhite, .specialkey, .widekey { font-family: 'MegaGlacial', system-ui, sans-serif; }
+
+/* Normalize heights/alignment for single-line keycaps without touching base .key */
+.megakey, .megakeywhite, .widekey {
+  height: 1.7em;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+/* Graphic symbol spans */
+.graphicsymbol { font-family: 'MEGA65GraphicSymbols', 'MegaGlacial', sans-serif !important; font-height: 1.5em; }
+
+/* Size helpers mapped from LaTeX size decorators */
+.size-huge { font-size: 1.6em; font-weight: 700; font-family: 'MegaGlacial', serif; }
+.size-huge code { font-family: 'MegaGlacial', serif; }
+.size-small { font-size: 0.85em; }
+
+
