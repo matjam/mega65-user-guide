@@ -37,7 +37,7 @@ RUN apt-get update \
 # Python + webfont tooling (system packages to avoid pip in system site)
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       python3 python3-fonttools woff2 fontforge python3-fontforge \
+       python3 python3-fonttools woff2 fontforge python3-fontforge python3-bs4 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

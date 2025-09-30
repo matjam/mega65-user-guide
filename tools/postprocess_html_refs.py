@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
+import html
+import json
 import sys
 import re
 import subprocess
 from pathlib import Path
+from bs4 import BeautifulSoup
 
 """
 Post-process chunked HTML output to convert LaTeX \vref{label} occurrences
@@ -537,13 +540,17 @@ def add_sidebar_to_html(html_content: str, toc_content: str, current_file: str) 
     
     body_start = body_match.end()
     
-    # Create sidebar HTML
+    # Create sidebar HTML with search bar
     sidebar_html = f'''<div class="sidebar">
-<nav id="TOC" role="doc-toc">
-{toc_content}
-</nav>
-</div>
-<div class="main-content">'''
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search documentation..." class="search-input">
+        <div id="searchResults" class="search-results"></div>
+    </div>
+    <nav id="TOC" role="doc-toc">
+    {toc_content}
+    </nav>
+    </div>
+    <div class="main-content">'''
     
     # Insert sidebar after body tag
     new_content = html_content[:body_start] + sidebar_html + html_content[body_start:]
@@ -625,6 +632,260 @@ def update_links_in_html(html_path: Path, rename_map: dict):
     except Exception as e:
         print(f"Warning: Could not update links in {html_path.name}: {e}")
 
+def create_search_index(outdir: Path) -> None:
+    """Create a search index of all HTML pages and save to JSON file."""
+    search_data = []
+    
+    for html_path in sorted(outdir.glob("*.html")):
+        try:
+            content = html_path.read_text(encoding="utf-8")
+            soup = BeautifulSoup(content, 'html.parser')
+            
+            # Extract title
+            title_tag = soup.find('title')
+            title = title_tag.get_text().strip() if title_tag else html_path.stem
+            
+            # Extract main content (skip navigation and sidebar)
+            main_content_div = soup.find('div', class_='main-content')
+            if main_content_div:
+                # Remove script and style elements
+                for script in main_content_div(["script", "style"]):
+                    script.decompose()
+                
+                # Get clean text content
+                clean_text = main_content_div.get_text()
+                # Clean up whitespace
+                clean_text = re.sub(r'\s+', ' ', clean_text).strip()
+            else:
+                # Fallback: extract all text content from body
+                body = soup.find('body')
+                if body:
+                    for script in body(["script", "style", "nav", "aside"]):
+                        script.decompose()
+                    clean_text = body.get_text()
+                    clean_text = re.sub(r'\s+', ' ', clean_text).strip()
+                else:
+                    clean_text = soup.get_text()
+                    clean_text = re.sub(r'\s+', ' ', clean_text).strip()
+            
+            # Remove LaTeX markup - safer approach
+            # Remove common LaTeX commands with balanced braces
+            clean_text = re.sub(r'\\[a-zA-Z]+\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', '', clean_text)  # \command{content} with balanced braces
+            clean_text = re.sub(r'\\[a-zA-Z]+', '', clean_text)  # \command without braces
+            clean_text = re.sub(r'\\[^a-zA-Z\s]', '', clean_text)  # \special chars (but not whitespace)
+            clean_text = re.sub(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', '', clean_text)  # {content} groups with balanced braces
+            clean_text = re.sub(r'\[[^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*\]', '', clean_text)  # [content] groups with balanced brackets
+            clean_text = re.sub(r'\\[a-zA-Z]*', '', clean_text)  # any remaining \commands
+            clean_text = re.sub(r'\s+', ' ', clean_text).strip()  # clean up whitespace again
+            
+            # Extract headings from main content
+            headings = []
+            if main_content_div:
+                for heading in main_content_div.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
+                    heading_text = heading.get_text().strip()
+                    # Remove LaTeX markup from headings too - safer approach
+                    heading_text = re.sub(r'\\[a-zA-Z]+\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', '', heading_text)
+                    heading_text = re.sub(r'\\[a-zA-Z]+', '', heading_text)
+                    heading_text = re.sub(r'\\[^a-zA-Z\s]', '', heading_text)
+                    heading_text = re.sub(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', '', heading_text)
+                    heading_text = re.sub(r'\[[^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*\]', '', heading_text)
+                    heading_text = re.sub(r'\\[a-zA-Z]*', '', heading_text)
+                    heading_text = re.sub(r'\s+', ' ', heading_text).strip()
+                    if heading_text:  # Only add non-empty headings
+                        headings.append(heading_text)
+            else:
+                # Fallback: extract all headings
+                for heading in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
+                    heading_text = heading.get_text().strip()
+                    # Remove LaTeX markup from headings too - safer approach
+                    heading_text = re.sub(r'\\[a-zA-Z]+\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', '', heading_text)
+                    heading_text = re.sub(r'\\[a-zA-Z]+', '', heading_text)
+                    heading_text = re.sub(r'\\[^a-zA-Z\s]', '', heading_text)
+                    heading_text = re.sub(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', '', heading_text)
+                    heading_text = re.sub(r'\[[^\[\]]*(?:\[[^\[\]]*\][^\[\]]*)*\]', '', heading_text)
+                    heading_text = re.sub(r'\\[a-zA-Z]*', '', heading_text)
+                    heading_text = re.sub(r'\s+', ' ', heading_text).strip()
+                    if heading_text:  # Only add non-empty headings
+                        headings.append(heading_text)
+            
+            headings_text = ' '.join(headings)
+                        
+            search_data.append({
+                'title': title,
+                'url': html_path.name,
+                'content': clean_text,
+                'headings': headings_text,
+                'filename': html_path.stem
+            })
+            
+        except Exception as e:
+            print(f"Warning: Could not process {html_path.name} for search index: {e}")
+    
+    # Write search index to separate JSON file
+    search_index_path = outdir / "search-index.json"
+    with open(search_index_path, 'w', encoding='utf-8') as f:
+        json.dump(search_data, f, ensure_ascii=False, indent=2)
+    
+    print(f"Search index written to {search_index_path}")
+
+def add_search_script(html_content: str) -> str:
+    """Add Fuse.js and search functionality to HTML content."""
+    # Find the closing head tag
+    head_end_match = re.search(r'(</head>)', html_content)
+    if not head_end_match:
+        return html_content
+    
+    head_end = head_end_match.start()
+    
+    # Add Fuse.js CDN and search script
+    search_script = '''
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.basic.min.js"></script>
+    <script>
+        // Search functionality
+        let searchIndex = null;
+        let fuse = null;
+        let searchIndexLoaded = false;
+        
+        // Initialize search when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const searchResults = document.getElementById('searchResults');
+            
+            if (!searchInput || !searchResults) return;
+            
+            // Load search index on first search
+            searchInput.addEventListener('input', function(e) {
+                const query = e.target.value.trim();
+                
+                if (query.length < 2) {
+                    searchResults.innerHTML = '';
+                    searchResults.style.display = 'none';
+                    return;
+                }
+                
+                // Load search index if not already loaded
+                if (!searchIndexLoaded) {
+                    loadSearchIndex().then(() => {
+                        performSearch(query, searchResults);
+                    });
+                } else {
+                    performSearch(query, searchResults);
+                }
+            });
+            
+            // Hide results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                    searchResults.style.display = 'none';
+                }
+            });
+        });
+        
+        async function loadSearchIndex() {
+            if (searchIndexLoaded) return;
+            
+            try {
+                const response = await fetch('search-index.json');
+                if (!response.ok) {
+                    throw new Error('Failed to load search index');
+                }
+                searchIndex = await response.json();
+                
+                // Initialize Fuse.js
+                fuse = new Fuse(searchIndex, {
+                    keys: [ 'title', 'content', 'headings', 'filename' ],
+                    threshold: 0.4,  // More lenient threshold (0.0 = exact match, 1.0 = match anything)
+                    includeScore: true,
+                    includeMatches: true,
+                    minMatchCharLength: 2,  // Minimum characters to match
+                    findAllMatches: true,   // Find all matches, not just the first
+                    distance: 10,
+                    ignoreLocation: true
+                });
+                
+                searchIndexLoaded = true;
+            } catch (error) {
+                console.error('Error loading search index:', error);
+                searchIndex = [];
+                searchIndexLoaded = true; // Prevent repeated attempts
+            }
+        }
+        
+        function performSearch(query, container) {
+            if (!fuse) {
+                container.innerHTML = '<div class="search-error">Search index not available</div>';
+                container.style.display = 'block';
+                return;
+            }
+            
+            const results = fuse.search(query);
+            displaySearchResults(results, container);
+        }
+        
+        function displaySearchResults(results, container) {
+            if (results.length === 0) {
+                container.innerHTML = '<div class="search-no-results">No results found</div>';
+                container.style.display = 'block';
+                return;
+            }
+            
+            let html = '<div class="search-results-list">';
+            results.slice(0, 10).forEach(result => {
+                const item = result.item;
+                const score = result.score;
+                const matches = result.matches || [];
+                
+                // Highlight matched text
+                let highlightedTitle = item.title;
+                let highlightedContent = item.content.substring(0, 200) + '...';
+                
+                if (matches.length > 0) {
+                    matches.forEach(match => {
+                        if (match.key === 'title') {
+                            highlightedTitle = highlightText(highlightedTitle, match.indices);
+                        } else if (match.key === 'content') {
+                            highlightedContent = highlightText(highlightedContent, match.indices);
+                        }
+                    });
+                }
+                
+                html += `
+                    <div class="search-result-item" onclick="window.location.href='${item.url}'">
+                        <div class="search-result-title">${highlightedTitle}</div>
+                        <div class="search-result-content">${highlightedContent}</div>
+                        <div class="search-result-url">${item.filename}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            container.innerHTML = html;
+            container.style.display = 'block';
+        }
+        
+        function highlightText(text, indices) {
+            if (!indices || indices.length === 0) return text;
+            
+            let result = '';
+            let lastIndex = 0;
+            
+            indices.forEach(([start, end]) => {
+                result += text.substring(lastIndex, start);
+                result += `<mark>${text.substring(start, end + 1)}</mark>`;
+                lastIndex = end + 1;
+            });
+            
+            result += text.substring(lastIndex);
+            return result;
+        }
+    </script>
+    '''
+    
+    # Insert the script before closing head tag
+    new_content = html_content[:head_end] + search_script + html_content[head_end:]
+    
+    return new_content
+
 def main():
     if len(sys.argv) != 2:
         print("Usage: postprocess_html_refs.py <html_output_dir>")
@@ -641,6 +902,10 @@ def main():
     # Extract TOC from index.html
     toc_content = extract_toc_from_index(outdir)
     
+    # Create search index
+    print("Creating search index...")
+    create_search_index(outdir)
+    
     id_map = build_id_map(outdir)
     for html_path in sorted(outdir.glob("*.html")):
         # Add sidebar to each HTML file
@@ -648,6 +913,11 @@ def main():
             data = html_path.read_text(encoding="utf-8")
             new_data = add_sidebar_to_html(data, toc_content, html_path.name)
             html_path.write_text(new_data, encoding="utf-8")
+        
+        # Add search functionality
+        data = html_path.read_text(encoding="utf-8")
+        new_data = add_search_script(data)
+        html_path.write_text(new_data, encoding="utf-8")
         
         # Update links to use new filenames
         update_links_in_html(html_path, rename_map)

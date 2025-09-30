@@ -136,10 +136,15 @@ jobs:
     - name: Deploy HTML to S3
       if: github.ref == 'refs/heads/feat/html-build'
       run: |
-        # Install AWS CLI
-        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-        unzip awscliv2.zip
-        sudo ./aws/install
+        # Check if AWS CLI is available, install if not
+        if ! command -v aws &> /dev/null; then
+          echo "Installing AWS CLI..."
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+        else
+          echo "AWS CLI already available"
+        fi
         
         # Sync HTML files to S3
         aws s3 sync html/mega65-book/ s3://${{ secrets.S3_BUCKET_NAME }}/mega65-book/ --delete
