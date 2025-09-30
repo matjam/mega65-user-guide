@@ -905,6 +905,12 @@ def main():
     # Extract TOC from index.html before we replace it
     toc_content = extract_toc_from_index(outdir)
     
+    # Update TOC content to use new filenames (replace colons with underscores)
+    if toc_content and rename_map:
+        for old_name, new_name in rename_map.items():
+            toc_content = toc_content.replace(old_name, new_name)
+        print("Updated TOC content with renamed filenames")
+    
     # Create search index
     print("Creating search index...")
     create_search_index(outdir)
