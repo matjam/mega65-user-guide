@@ -152,18 +152,8 @@ jobs:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: us-east-1
-        
-    - name: Invalidate CloudFront Cache (Distribution 1)
-      if: github.ref == 'refs/heads/feat/html-build'
-      uses: awact/cloudfront-action@master
-      env:
-        SOURCE_PATH: "/mega65-book/*"
-        AWS_REGION: "us-east-1"
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        DISTRIBUTION_ID: E3CBXE5UNLO2XX
-        
-    - name: Invalidate CloudFront Cache (Distribution 2)
+                
+    - name: Invalidate CloudFront Cache
       if: github.ref == 'refs/heads/feat/html-build'
       uses: awact/cloudfront-action@master
       env:

@@ -533,14 +533,18 @@ def extract_toc_from_index(outdir: Path) -> str:
 
 def add_sidebar_to_html(html_content: str, toc_content: str, current_file: str) -> str:
     """Add sidebar navigation to HTML content."""
-    # Find the body tag and insert sidebar
+    # Wrap the main content in a div
     body_match = re.search(r'(<body[^>]*>)', html_content)
     if not body_match:
         return html_content
     
     body_start = body_match.end()
     
-    # Create sidebar HTML with search bar
+    # Wrap the main content in a div
+    main_content_wrapper = '<div class="main-content">'
+    new_content = html_content[:body_start] + main_content_wrapper + html_content[body_start:]
+    
+    # Add the sidebar at the end, before closing body tag
     sidebar_html = f'''<div class="sidebar">
     <div class="search-container">
         <input type="text" id="searchInput" placeholder="Search documentation..." class="search-input">
@@ -549,26 +553,10 @@ def add_sidebar_to_html(html_content: str, toc_content: str, current_file: str) 
     <nav id="TOC" role="doc-toc">
     {toc_content}
     </nav>
-    </div>
-    <div class="main-content">'''
+    </div>'''
     
-    # Insert sidebar after body tag
-    new_content = html_content[:body_start] + sidebar_html + html_content[body_start:]
-    
-    # Move front cover image to after the first h1 heading
-    # Find front cover div and first h1
-    frontcover_match = re.search(r'<div class="frontcover"[^>]*>.*?</div>', new_content, re.DOTALL)
-    h1_match = re.search(r'<h1[^>]*>.*?</h1>', new_content, re.DOTALL)
-    
-    if frontcover_match and h1_match:
-        frontcover_html = frontcover_match.group(0)
-        h1_end = h1_match.end()
-        
-        # Remove the front cover from its current position
-        new_content = new_content.replace(frontcover_html, '')
-        
-        # Insert it after the first h1
-        new_content = new_content[:h1_end] + '\n' + frontcover_html + '\n' + new_content[h1_end:]
+    # Insert sidebar before closing body tag
+    new_content = re.sub(r'(</body>)', sidebar_html + r'\1', new_content)
     
     # Close the main-content div before closing body tag
     new_content = re.sub(r'(</body>)', r'</div>\1', new_content)
