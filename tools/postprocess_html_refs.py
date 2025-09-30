@@ -575,16 +575,16 @@ def add_sidebar_to_html(html_content: str, toc_content: str, current_file: str) 
     
     return new_content
 
-def rename_cha_files(outdir: Path) -> dict:
-    """Rename files with 'cha:' prefix and return mapping of old->new names."""
+def rename_colon_files(outdir: Path) -> dict:
+    """Rename files with colons in their names and return mapping of old->new names."""
     rename_map = {}
     
-    # Find all files with 'cha:' in the name
-    cha_files = list(outdir.glob("*cha:*"))
+    # Find all files with ':' in the name
+    colon_files = list(outdir.glob("*:*"))
     
-    for old_path in cha_files:
-        # Remove 'cha:' prefix from filename
-        new_name = old_path.name.replace("cha:", "")
+    for old_path in colon_files:
+        # Replace all colons with underscores
+        new_name = old_path.name.replace(":", "_")
         new_path = old_path.parent / new_name
         
         # Rename the file
@@ -634,9 +634,9 @@ def main():
         print(f"ERROR: Not a directory: {outdir}")
         sys.exit(1)
     
-    # First, rename files with 'cha:' prefix
-    print("Renaming files with 'cha:' prefix...")
-    rename_map = rename_cha_files(outdir)
+    # First, rename files with colons in their names
+    print("Renaming files with colons in their names...")
+    rename_map = rename_colon_files(outdir)
     
     # Extract TOC from index.html
     toc_content = extract_toc_from_index(outdir)

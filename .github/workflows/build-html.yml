@@ -27,6 +27,75 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-apt-
           
+    - name: Cache PDF build
+      uses: actions/cache@v4
+      with:
+        path: |
+          mega65-book.pdf
+          mega65-book.aux
+          mega65-book.bbl
+          mega65-book.blg
+          mega65-book.fdb_latexmk
+          mega65-book.fls
+          mega65-book.idx
+          mega65-book.ilg
+          mega65-book.ind
+          mega65-book.listing
+          mega65-book.log
+          mega65-book.out
+          mega65-book.toc
+          mega65-book.xref
+          mega65-book.4ct
+          mega65-book.4tc
+          styleguide.pdf
+          styleguide.aux
+          styleguide.fdb_latexmk
+          styleguide.fls
+          styleguide.idx
+          styleguide.ilg
+          styleguide.ind
+          styleguide.listing
+          styleguide.log
+          styleguide.out
+          styleguide.toc
+          styleguide.xref
+          styleguide.4ct
+          styleguide.4tc
+          styleguide-html.log
+          api-conio.tex
+          appendix-basic65-condensed.tex
+          appendix-basic65-indexed.tex
+          appendix-kernal-jumptable.aux
+          document-memory
+          examples/iec-data-logger-2.tex
+          examples/iec-data-logger-2.txt
+          examples/iec-data-logger.tex
+          examples/iec-data-logger.txt
+          examples/ledcycle.tex
+          examples/ledcycle.txt
+          generate_condensed
+          gitinfo.tex
+          index_basic_programmes
+          instruction_set
+          instructionset-4510.tex
+          instructionset-45GS02.tex
+          instructionset-6502.tex
+          keymap
+          keymap_table_1.tex
+          keymap_table_2.tex
+          keymap_table_3.tex
+          keymap_table_4.tex
+          keymap_table_5.tex
+          libc-doc
+          opcodetable-4510.tex
+          opcodetable-6502.tex
+          prg2tex
+          regtable_*.tex
+          unicode_mapping.tex
+        key: ${{ runner.os }}-pdf-${{ hashFiles('**/*.tex', '**/references.bib', '**/Makefile') }}
+        restore-keys: |
+          ${{ runner.os }}-pdf-
+          
     - name: Install system dependencies
       run: |
         sudo apt-get update
@@ -39,7 +108,13 @@ jobs:
           python3 python3-fonttools woff2 fontforge python3-fontforge
         
     - name: Build PDF
-      run: make mega65-book.pdf
+      run: |
+        if [ ! -f mega65-book.pdf ]; then
+          echo "PDF not found in cache, building..."
+          make mega65-book.pdf
+        else
+          echo "PDF found in cache, skipping build"
+        fi
       
     - name: Build HTML
       run: make mega65-book-html

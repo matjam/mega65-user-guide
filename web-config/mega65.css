@@ -130,9 +130,9 @@ body {
 /* Main content area */
 .main-content {
   flex: 1;
-  margin-left: var(--sidebar-width);
   padding: 1.25rem var(--gutter);
   max-width: 800px;
+  margin-left: calc(var(--sidebar-width) + 2rem);
   margin-right: auto;
   box-sizing: border-box;
 }
