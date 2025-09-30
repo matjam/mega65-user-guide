@@ -126,6 +126,7 @@ REPAIRED_FONTS_DIR=	fonts-repaired
 	./document-memory -q $(REPOPATH)/mega65-core/src/vhdl/*.vhdl $(REPOPATH)/mega65-core/src/vhdl/*/*.vhdl
 	@outdir=$(HTML_OUTDIR)/$*; \
 		rm -rf "$$outdir"; \
+		mkdir -p $(HTML_OUTDIR); \
 		latexpand --empty-comments --makeatletter $*.tex > "$*._flat_full.tex"; \
 		python3 tools/tex_preprocess_for_pandoc.py "$*._flat_full.tex" "$*._flat_body.tex"; \
 		pandoc -f latex+raw_tex -t chunkedhtml \

@@ -11,6 +11,7 @@ on:
 jobs:
   build-html:
     runs-on: ubuntu-24.04
+    if: github.repository == 'matjam/mega65-user-guide'
     
     steps:
     - name: Checkout repository
@@ -18,6 +19,14 @@ jobs:
       with:
         submodules: recursive
         
+    - name: Cache apt packages
+      uses: actions/cache@v4
+      with:
+        path: /var/cache/apt
+        key: ${{ runner.os }}-apt-${{ hashFiles('**/Dockerfile') }}
+        restore-keys: |
+          ${{ runner.os }}-apt-
+          
     - name: Install system dependencies
       run: |
         sudo apt-get update
@@ -48,3 +57,38 @@ jobs:
         name: mega65-book-pdf
         path: mega65-book.pdf
         retention-days: 30
+        
+    - name: Deploy HTML to S3
+      if: github.ref == 'refs/heads/feat/html-build'
+      run: |
+        # Install AWS CLI
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install
+        
+        # Sync HTML files to S3
+        aws s3 sync html/mega65-book/ s3://${{ secrets.S3_BUCKET_NAME }}/mega65-book/ --delete
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: us-east-1
+        
+    - name: Invalidate CloudFront Cache (Distribution 1)
+      if: github.ref == 'refs/heads/feat/html-build'
+      uses: awact/cloudfront-action@master
+      env:
+        SOURCE_PATH: "/mega65-book/*"
+        AWS_REGION: "us-east-1"
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        DISTRIBUTION_ID: E3CBXE5UNLO2XX
+        
+    - name: Invalidate CloudFront Cache (Distribution 2)
+      if: github.ref == 'refs/heads/feat/html-build'
+      uses: awact/cloudfront-action@master
+      env:
+        SOURCE_PATH: "/mega65-book/*"
+        AWS_REGION: "us-east-1"
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        DISTRIBUTION_ID: E2N2NU6EOMTCJY
