@@ -193,6 +193,9 @@ def rewrite_file(path: Path, id_map: dict):
     new_data = re.sub(r"@@SIZEHUGE\{([^}]*)\}", r"<span class=\"size-huge\">\\1</span>", new_data)
     new_data = re.sub(r"@@SIZESMALL\{([^}]*)\}", r"<span class=\"size-small\">\\1</span>", new_data)
 
+    # Strip out \pagenumbering{bychapter} from the front page
+    new_data = re.sub(r"\\pagenumbering\{bychapter\}", "", new_data)
+
     # Fix residual patterns from earlier HTML-escaped injections
     # Case: <code>&lt;span class="size-huge"&gt;</code>CONTENT<code>&lt;/span&gt;</code>
     new_data = re.sub(

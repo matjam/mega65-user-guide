@@ -148,7 +148,6 @@ REPAIRED_FONTS_DIR=	fonts-repaired
 		rm -f "$*._flat_full.tex" "$*._flat_body.tex"; \
 		# Copy assets into chunked output (ensure outdir is in this subshell)
 		@outdir=$(HTML_OUTDIR)/$*; \
-		mkdir -p "$$outdir" && \
 		cp web-config/mega65.css "$$outdir"/mega65.css && \
 		cp -r fonts "$$outdir"/fonts && \
 		if [ -d $(WEBFONTS_DIR) ]; then cp -r $(WEBFONTS_DIR) "$$outdir"/fonts-web; fi && \
