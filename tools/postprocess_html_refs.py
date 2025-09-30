@@ -888,6 +888,7 @@ def add_search_script(html_content: str) -> str:
     
     return new_content
 
+
 def main():
     if len(sys.argv) != 2:
         print("Usage: postprocess_html_refs.py <html_output_dir>")
@@ -901,7 +902,7 @@ def main():
     print("Renaming files with colons in their names...")
     rename_map = rename_colon_files(outdir)
     
-    # Extract TOC from index.html
+    # Extract TOC from index.html before we replace it
     toc_content = extract_toc_from_index(outdir)
     
     # Create search index
@@ -925,6 +926,15 @@ def main():
         update_links_in_html(html_path, rename_map)
         
         rewrite_file(html_path, id_map)
+    
+    # Copy the first content page over index.html as the final step
+    first_content = outdir / "1-mega65-reference-guide.html"
+    if first_content.exists():
+        import shutil
+        shutil.copy2(first_content, outdir / "index.html")
+        print(f"Copied {first_content.name} to index.html")
+    else:
+        print("Warning: Could not find first content page to copy to index.html")
 
 if __name__ == "__main__":
     main()
