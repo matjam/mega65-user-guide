@@ -133,6 +133,7 @@ REPAIRED_FONTS_DIR=	fonts-repaired
 		  --top-level-division=chapter \
 		  --split-level=2 --toc --standalone --citeproc --mathjax \
 		  --number-sections \
+		  --metadata title="MEGA65 Book" \
 		  --mathjax=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js \
 		  --bibliography=references.bib \
 		  --resource-path=. \

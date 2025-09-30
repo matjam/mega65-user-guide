@@ -555,6 +555,21 @@ def add_sidebar_to_html(html_content: str, toc_content: str, current_file: str) 
     # Insert sidebar after body tag
     new_content = html_content[:body_start] + sidebar_html + html_content[body_start:]
     
+    # Move front cover image to after the first h1 heading
+    # Find front cover div and first h1
+    frontcover_match = re.search(r'<div class="frontcover"[^>]*>.*?</div>', new_content, re.DOTALL)
+    h1_match = re.search(r'<h1[^>]*>.*?</h1>', new_content, re.DOTALL)
+    
+    if frontcover_match and h1_match:
+        frontcover_html = frontcover_match.group(0)
+        h1_end = h1_match.end()
+        
+        # Remove the front cover from its current position
+        new_content = new_content.replace(frontcover_html, '')
+        
+        # Insert it after the first h1
+        new_content = new_content[:h1_end] + '\n' + frontcover_html + '\n' + new_content[h1_end:]
+    
     # Close the main-content div before closing body tag
     new_content = re.sub(r'(</body>)', r'</div>\1', new_content)
     
@@ -586,18 +601,17 @@ def rename_colon_files(outdir: Path) -> dict:
     """Rename files with colons in their names and return mapping of old->new names."""
     rename_map = {}
     
-    # Find all files with ':' in the name
-    colon_files = list(outdir.glob("*:*"))
-    
-    for old_path in colon_files:
-        # Replace all colons with underscores
-        new_name = old_path.name.replace(":", "_")
-        new_path = old_path.parent / new_name
-        
-        # Rename the file
-        old_path.rename(new_path)
-        rename_map[old_path.name] = new_name
-        print(f"Renamed: {old_path.name} -> {new_name}")
+    # Check all HTML files for colons in their names
+    for html_file in outdir.glob("*.html"):
+        if ":" in html_file.name:
+            # Replace all colons with underscores
+            new_name = html_file.name.replace(":", "_")
+            new_path = html_file.parent / new_name
+            
+            # Rename the file
+            html_file.rename(new_path)
+            rename_map[html_file.name] = new_name
+            print(f"Renamed: {html_file.name} -> {new_name}")
     
     return rename_map
 

@@ -146,6 +146,26 @@ def strip_problem_macros(text: str) -> str:
     # Convert \megabookstart{Title}{Version} to a simple chapter heading
     text = re.sub(r"\\megabookstart\{([^}]*)\}\{[^}]*\}", r"\\chapter{\1}", text)
 
+    # Handle title picture macros - convert to proper includegraphics
+    def repl_titlepic(m: re.Match) -> str:
+        jobname = m.group(1)
+        # Map jobname to the appropriate front cover image
+        if jobname == "mega65-book":
+            return "\\includegraphics[width=\\textwidth]{frontcover/m65book_title}"
+        elif jobname == "mega65-userguide":
+            return "\\includegraphics[width=\\textwidth]{frontcover/userguide_title}"
+        elif jobname == "mega65-developer-guide":
+            return "\\includegraphics[width=\\textwidth]{frontcover/developer_title}"
+        elif jobname == "mega65-chipset-reference":
+            return "\\includegraphics[width=\\textwidth]{frontcover/chipset_title}"
+        elif jobname == "mega65-basic65-reference":
+            return "\\includegraphics[width=\\textwidth]{frontcover/basic65_title}"
+        else:
+            return ""
+    
+    # Replace \titlepic{\jobname} with appropriate includegraphics
+    text = re.sub(r"\\titlepic\{([^}]+)\}", repl_titlepic, text)
+    
     # Remove problematic macro definitions completely
     text = re.sub(r"\\newcommand\\titlestreq[\s\S]*?\n\}", "", text)
     text = re.sub(r"\\newcommand\\titlepic[\s\S]*?\n\}", "", text)

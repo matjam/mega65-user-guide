@@ -105,7 +105,7 @@ jobs:
           ghostscript inkscape imagemagick \
           latexmk texlive-full \
           pandoc \
-          python3 python3-fonttools woff2 fontforge python3-fontforge
+          python3 python3-fonttools woff2 fontforge python3-fontforge python3-bs4
         
     - name: Build PDF
       run: |
