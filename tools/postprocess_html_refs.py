@@ -498,9 +498,9 @@ def rewrite_file(path: Path, id_map: dict):
             '<li><a href="https://mega65.org/chipset-ref">https://mega65.org/chipset-ref</a></li>'
             '<li><a href="https://mega65.org/docs">https://mega65.org/docs</a></li>'
             '</ul>'
-            '<p><strong>This web version of the Mega65 Compendium is generated from the same source as the books, however it may contain '
-            'errors or omissions due to the conversion process. You should always consider the PDF and Hard Copy versions of The Mega65 '
-            'Book as the official representation. If you find content missing from the Web version of The Mega65 Book, please report an '
+            '<p><strong>This web version of the MEGA65 Compendium is generated from the same source as the books, however it may contain '
+            'errors or omissions due to the conversion process. You should always consider the PDF and Hard Copy versions of The MEGA65 '
+            'Book as the official representation. If you find content missing from the Web version of The MEGA65 Book, please report an '
             'issue in the issue tracker linked above.</strong></p>'
         )
 
