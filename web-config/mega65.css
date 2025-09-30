@@ -98,20 +98,65 @@ html, body {
   padding: 0;
   font-family: 'MegaGlacial', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
   line-height: 1.5;
+  height: 100%;
 }
 
-/* Constrain content width for readability */
+/* Main layout container */
 body {
-  --page-max: 82ch;
+  --sidebar-width: 220px;
   --gutter: clamp(12px, 2.2vw, 24px);
   --border-color: #e5e7eb;
   --border-color-dark: #111827;
-  max-width: var(--page-max);
-  padding: 1.25rem var(--gutter);
-  margin: 0 auto;
+  display: flex;
+  min-height: 100vh;
   background: #fff;
   color: #111;
-  box-shadow: inset 1px 0 0 var(--border-color), inset -1px 0 0 var(--border-color);
+}
+
+/* Sidebar navigation */
+.sidebar {
+  width: var(--sidebar-width);
+  background: #f8f9fa;
+  border-right: 1px solid var(--border-color);
+  padding: 0.5rem 0.3rem;
+  overflow-y: auto;
+  position: fixed;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+}
+
+/* Main content area */
+.main-content {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  padding: 1.25rem var(--gutter);
+  max-width: 800px;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+/* Responsive behavior */
+@media (max-width: 768px) {
+  body {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    max-height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .main-content {
+    margin-left: 0;
+    max-width: 100%;
+    padding: 1rem;
+  }
 }
 
 code, pre, kbd, samp {
@@ -148,12 +193,182 @@ h1, h2, h3, h4, h5, h6 {
   margin: 1.2em 0 .5em;
 }
 
+/* Table of Contents in sidebar */
+.sidebar nav.toc {
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border-radius: 0;
+}
+
+.sidebar nav.toc ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar nav.toc li {
+  margin: 0;
+  padding: 0;
+  line-height: 1.2;
+}
+
+.sidebar nav.toc > ul > li {
+  margin-bottom: 0.1rem;
+}
+
+/* Remove bullets from all levels - override pandoc styles */
+.sidebar nav.toc ul,
+.sidebar nav.toc ul ul,
+.sidebar nav.toc ul ul ul {
+  list-style: none !important;
+  list-style-type: none !important;
+}
+
+.sidebar nav.toc li,
+.sidebar nav.toc li::before,
+.sidebar nav.toc li::after {
+  list-style: none !important;
+  list-style-type: none !important;
+}
+
+/* Override any pandoc-generated list styles */
+.sidebar nav.toc ul li {
+  list-style: none !important;
+  list-style-type: none !important;
+}
+
+.sidebar nav.toc ul li::marker {
+  display: none !important;
+}
+
+.sidebar nav.toc a {
+  display: block;
+  padding: 0.2rem 0.3rem;
+  color: #374151;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Top-level items flush left - override pandoc styles */
+.sidebar nav.toc > ul > li > a {
+  padding-left: 0.1rem !important;
+  font-weight: 600 !important;
+  margin-left: 0 !important;
+}
+
+/* Override any default list styling */
+.sidebar nav.toc > ul {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  list-style: none !important;
+}
+
+.sidebar nav.toc > ul > li {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  list-style: none !important;
+}
+
+.sidebar nav.toc a:hover {
+  background-color: #e5e7eb;
+  color: #1d4ed8;
+}
+
+.sidebar nav.toc a.active {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+/* Nested TOC items - override pandoc styles with higher specificity */
+.sidebar nav.toc ul ul {
+  margin-left: 0.3rem !important;
+  border-left: 1px solid #d1d5db;
+  padding-left: 0.2rem !important;
+  list-style: none !important;
+}
+
+.sidebar nav.toc ul ul a {
+  padding: 0.15rem 0.3rem !important;
+  font-size: 0.7rem !important;
+}
+
+.sidebar nav.toc ul ul ul {
+  margin-left: 0.2rem !important;
+  list-style: none !important;
+}
+
+.sidebar nav.toc ul ul ul a {
+  padding: 0.1rem 0.25rem !important;
+  font-size: 0.65rem !important;
+}
+
+/* Force override of any inherited styles */
+.sidebar nav.toc ul li {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+.sidebar nav.toc > ul > li {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+/* Section numbers in sidebar */
+.sidebar nav.toc .toc-section-number {
+  color: #6b7280;
+  font-weight: 500;
+  margin-right: 0.3rem;
+  font-size: 0.7em;
+  min-width: 1.2em;
+  display: inline-block;
+}
+
+/* Traditional TOC (for non-sidebar pages) */
 nav.toc {
   border: 1px solid #ddd;
   padding: 1rem;
   margin-bottom: 1rem;
   background: #fafafa;
   border-radius: 8px;
+}
+
+/* Force override all list styles in sidebar - maximum specificity */
+body .sidebar nav#TOC ul,
+body .sidebar nav#TOC ul ul,
+body .sidebar nav#TOC ul ul ul {
+  list-style: none !important;
+  list-style-type: none !important;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+body .sidebar nav#TOC ul li,
+body .sidebar nav#TOC ul ul li,
+body .sidebar nav#TOC ul ul ul li {
+  list-style: none !important;
+  list-style-type: none !important;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+/* Override nested indentation */
+body .sidebar nav#TOC ul ul {
+  margin-left: 0.3rem !important;
+  padding-left: 0.2rem !important;
+}
+
+body .sidebar nav#TOC ul ul ul {
+  margin-left: 0.2rem !important;
+  padding-left: 0.1rem !important;
 }
 
 a {

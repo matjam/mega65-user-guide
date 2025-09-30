@@ -512,6 +512,119 @@ def rewrite_file(path: Path, id_map: dict):
     if new_data != data:
         path.write_text(new_data, encoding="utf-8")
 
+def extract_toc_from_index(outdir: Path) -> str:
+    """Extract the TOC from index.html to use in sidebar."""
+    index_path = outdir / "index.html"
+    if not index_path.exists():
+        return ""
+    
+    try:
+        data = index_path.read_text(encoding="utf-8")
+        # Find the TOC nav element
+        toc_match = re.search(r'<nav id="TOC"[^>]*>(.*?)</nav>', data, re.DOTALL)
+        if toc_match:
+            return toc_match.group(1)
+    except Exception:
+        pass
+    return ""
+
+def add_sidebar_to_html(html_content: str, toc_content: str, current_file: str) -> str:
+    """Add sidebar navigation to HTML content."""
+    # Find the body tag and insert sidebar
+    body_match = re.search(r'(<body[^>]*>)', html_content)
+    if not body_match:
+        return html_content
+    
+    body_start = body_match.end()
+    
+    # Create sidebar HTML
+    sidebar_html = f'''<div class="sidebar">
+<nav id="TOC" role="doc-toc">
+{toc_content}
+</nav>
+</div>
+<div class="main-content">'''
+    
+    # Insert sidebar after body tag
+    new_content = html_content[:body_start] + sidebar_html + html_content[body_start:]
+    
+    # Close the main-content div before closing body tag
+    new_content = re.sub(r'(</body>)', r'</div>\1', new_content)
+    
+    # Mark current page as active in sidebar
+    if current_file != "index.html":
+        # Find the link to current file and mark it as active
+        current_file_escaped = re.escape(current_file)
+        new_content = re.sub(
+            rf'(<a[^>]*href="{current_file_escaped}"[^>]*>)',
+            r'\1',
+            new_content
+        )
+        # Add active class to the link
+        new_content = re.sub(
+            rf'(<a[^>]*href="{current_file_escaped}"[^>]*class=")([^"]*)(")',
+            r'\1\2 active\3',
+            new_content
+        )
+        # Handle case where there's no existing class
+        new_content = re.sub(
+            rf'(<a[^>]*href="{current_file_escaped}"[^>]*)(>)',
+            r'\1 class="active"\2',
+            new_content
+        )
+    
+    return new_content
+
+def rename_cha_files(outdir: Path) -> dict:
+    """Rename files with 'cha:' prefix and return mapping of old->new names."""
+    rename_map = {}
+    
+    # Find all files with 'cha:' in the name
+    cha_files = list(outdir.glob("*cha:*"))
+    
+    for old_path in cha_files:
+        # Remove 'cha:' prefix from filename
+        new_name = old_path.name.replace("cha:", "")
+        new_path = old_path.parent / new_name
+        
+        # Rename the file
+        old_path.rename(new_path)
+        rename_map[old_path.name] = new_name
+        print(f"Renamed: {old_path.name} -> {new_name}")
+    
+    return rename_map
+
+def update_links_in_html(html_path: Path, rename_map: dict):
+    """Update all links in an HTML file to use new filenames."""
+    if not rename_map:
+        return
+    
+    try:
+        data = html_path.read_text(encoding="utf-8")
+        original_data = data
+        
+        # Update all href attributes that point to renamed files
+        for old_name, new_name in rename_map.items():
+            # Update href="old_name" to href="new_name"
+            data = re.sub(
+                rf'href="([^"]*){re.escape(old_name)}"',
+                rf'href="\g<1>{new_name}"',
+                data
+            )
+            # Also handle href="old_name" (without path)
+            data = re.sub(
+                rf'href="{re.escape(old_name)}"',
+                rf'href="{new_name}"',
+                data
+            )
+        
+        if data != original_data:
+            html_path.write_text(data, encoding="utf-8")
+            print(f"Updated links in: {html_path.name}")
+    
+    except Exception as e:
+        print(f"Warning: Could not update links in {html_path.name}: {e}")
+
 def main():
     if len(sys.argv) != 2:
         print("Usage: postprocess_html_refs.py <html_output_dir>")
@@ -520,8 +633,25 @@ def main():
     if not outdir.is_dir():
         print(f"ERROR: Not a directory: {outdir}")
         sys.exit(1)
+    
+    # First, rename files with 'cha:' prefix
+    print("Renaming files with 'cha:' prefix...")
+    rename_map = rename_cha_files(outdir)
+    
+    # Extract TOC from index.html
+    toc_content = extract_toc_from_index(outdir)
+    
     id_map = build_id_map(outdir)
     for html_path in sorted(outdir.glob("*.html")):
+        # Add sidebar to each HTML file
+        if toc_content:
+            data = html_path.read_text(encoding="utf-8")
+            new_data = add_sidebar_to_html(data, toc_content, html_path.name)
+            html_path.write_text(new_data, encoding="utf-8")
+        
+        # Update links to use new filenames
+        update_links_in_html(html_path, rename_map)
+        
         rewrite_file(html_path, id_map)
 
 if __name__ == "__main__":
